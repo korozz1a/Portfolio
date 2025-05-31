@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id              String      @id @default(cuid())
+  name            String?
+  image           String?
+  email           String?     @unique
+  emailVerified   DateTime    @default(now())
+  hashedPassword  String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  accounts        Account[]
+  sessions        Session[]
+
+  about           About?
+  experiences     Experience[]
+  expertises      Expertise[]
+  qualifications  Qualification[]
+  portfolios      Portfolio[]
+  miscellaneous   Miscellaneous?
+  tools           Tool[]
+  resume          Resume?
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id            String     @id @default(cuid())
+  sessionToken  String     @unique
+  userId        String
+  expires       DateTime
+
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model About {
+  id          String    @id @default(cuid())
+  experience  String
+  project     String
+  worldwide   String
+  summary     String    @db.Text
+
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+enum SkillType {
+  FRONTEND
+  BACKEND
+}
+
+model Experience {
+  id          String     @id @default(cuid())
+  skill       String
+  level       String
+  type        SkillType  @default(FRONTEND)
+
+  userId      String    
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId, type])
+}
+
+enum ServiceType {
+  SEOOPTIMIZATION
+  WEBDEVELOPMENT
+  CONTENTCREATION
+}
+
+model Expertise {
+  id          String       @id @default(cuid())
+  service     String
+  type        ServiceType  @default(SEOOPTIMIZATION)
+
+  userId      String    
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId, type])
+}
+
+enum QualificationType {
+  EDUCATION
+  EXPERIENCE
+}
+
+model Qualification {
+  id          String             @id @default(cuid())
+  type        QualificationType  @default(EDUCATION)
+  degree      String
+  school      String
+  position    String
+  company     String
+  startYear   String
+  endYear     String
+
+  userId      String    
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([userId, type])
+}
+
+model Portfolio {
+  id           String    @id @default(cuid())
+  image        String?
+  thumbnail    String?
+  blurDataUrl  String?   @db.Text
+  title        String
+  description  String
+  githubUrl    String
+  demoUrl      String
+
+  userId       String    
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tags         Tag[]
+
+  @@index([userId])
+}
+
+model Tag {
+  id            String     @id @default(cuid())
+  name          String
+
+  portfolioId   String
+  portfolio     Portfolio  @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([portfolioId])
+}
+
+model Miscellaneous {
+  id               String   @id @default(cuid())
+  email            String
+  messengerName    String
+  messengerUrl     String
+  discordUsername  String
+  discordUrl       String
+  facebookUrl      String
+  instagramUrl     String
+  twitterUrl       String
+  linkedinUrl      String
+  githubUrl        String
+
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  titles           Title[]
+
+  @@index([userId])
+}
+
+model Title {
+  id               String         @id @default(cuid())
+  name             String
+
+  miscellaneousId  String
+  miscellaneous    Miscellaneous  @relation(fields: [miscellaneousId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([miscellaneousId])
+}
+
+enum ToolType {
+  LIGHT
+  DARK
+}
+
+model Tool {
+  id           String    @id @default(cuid())
+  image        String?
+  thumbnail    String?
+  name         String
+  color       ToolType  @default(LIGHT)
+
+  userId       String    
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Resume {
+  id          String    @id @default(cuid())
+  pdf         String?
+
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model ResumeDownloader {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  company     String?
+}
+
+model DownloadToken {
+  id          String    @id @default(cuid())
+  email       String
+  token       String    @unique
+  expires     DateTime
+
+  @@unique([email, token])
+}
